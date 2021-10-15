@@ -1,22 +1,24 @@
 from datetime import datetime
 from django.utils.timesince import timesince
 from rest_framework import serializers
-from news.models import Article
+from news.models import Article, Journalist
 
 class ArticleSerializer(serializers.ModelSerializer):
 
     time_since_publication = serializers.SerializerMethodField()
+    # author                 = JournalistSerializer(read_only=True)
+    # author                 = serializers.StringRelatedField()
 
     class Meta:
-        model = Article
+        model   = Article
         exclude = ("id", )
-         # fields = "__all__" # we want all the fields of our model
+        # fields = "__all__" # we want all the fields of our model
         # fields = ("title", "description", "body") # we want to choose a couple of fields of our model
 
     def get_time_since_publication(self, object):
         publication_date = object.publication_date
-        now = datetime.now()
-        time_delta = timesince(publication_date, now)
+        now              = datetime.now()
+        time_delta       = timesince(publication_date, now)
         return time_delta
 
     def validate(self, data):
@@ -29,6 +31,14 @@ class ArticleSerializer(serializers.ModelSerializer):
         if len(value) < 10:
             raise serializers.ValidationError("The title has to be at least 10 chars long")
         return value
+
+class JournalistSerializer(serializers.ModelSerializer):
+    articles = serializers.HyperlinkedRelatedField(many=True, read_only=True, view_name="article-detail")
+    # articles = ArticleSerializer(many=True, read_only=True)
+
+    class Meta:
+        model  = Journalist
+        fields = "__all__"
 
 
 # class ArticleSerializer(serializers.Serializer):
